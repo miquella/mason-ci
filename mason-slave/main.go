@@ -57,9 +57,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("BAD: died - %s\n", err)
 	}
-
 	err = websocket.Message.Send(ws, b)
 	if err != nil {
 		log.Fatalf("BAD: died - %s\n", err)
 	}
+
+	// listen for messages
+	masterWebsocketHandler(ws)
 }
