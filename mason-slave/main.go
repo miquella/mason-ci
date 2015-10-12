@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&MasterURL, "master-url", "", "URI for master node")
+	flag.StringVar(&MasterURL, "master-url", "http://localhost:9535", "URI for master node")
 	flag.Parse()
 
 	var err error
