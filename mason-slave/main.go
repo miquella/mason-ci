@@ -13,35 +13,33 @@ import (
 
 var (
 	MasterURL string
-	URL       *url.URL
+
+	OriginURL    *url.URL
+	SlavePath, _ = url.Parse("slave")
 )
 
 func init() {
 	flag.StringVar(&MasterURL, "master-url", "", "URI for master node")
 	flag.Parse()
 
-	u, err := url.Parse(MasterURL)
+	var err error
+	OriginURL, err = url.Parse(MasterURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	URL = &url.URL{
-		Host:   u.Host,
-		Scheme: "ws",
-		Path:   "/slave",
+	switch OriginURL.Scheme {
+	case "http":
+		OriginURL.Scheme = "ws"
+	case "https":
+		OriginURL.Scheme = "wss"
+	default:
+		log.Fatalf("Invalid master url scheme: %s\n", OriginURL.Scheme)
 	}
-
 }
 
 func main() {
-	origin := &url.URL{
-		Host:   URL.Host,
-		Scheme: "http",
-		Path:   "/",
-	}
-	println(URL.String())
-	println(origin.String())
-	ws, err := websocket.Dial(URL.String(), "", origin.String())
+	slaveUrl := OriginURL.ResolveReference(SlavePath)
+	ws, err := websocket.Dial(slaveUrl.String(), "", OriginURL.String())
 	if err != nil {
 		log.Fatal(err)
 	}
