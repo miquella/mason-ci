@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
-	"net/http"
+	//	"net/http"
 
-	r "github.com/dancannon/gorethink"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/websocket"
 )
@@ -21,17 +21,13 @@ func init() {
 	var rethinkAddress string
 	var rethinkDatabase string
 	flag.StringVar(&rethinkAddress, "rethink-address", "localhost:28015", "Rethink address")
-	flag.StringVar(&rethinkDatabase, "rethink-database", "mason-ci", "Rethink database name")
+	flag.StringVar(&rethinkDatabase, "rethink-database", "mason_ci", "Rethink database name")
 	flag.Parse()
-	rethinkSession, err := r.Connect(r.ConnectOpts{
-		Address:  rethinkAddress,
-		Database: rethinkDatabase,
-	})
+
+	var err error
+	Store, err = NewRethinkDatastore(rethinkAddress, rethinkDatabase)
 	if err != nil {
-		log.Fatal(err.Error())
-	}
-	Store = &RethinkDatastore{
-		rethinkSession: rethinkSession,
+		log.Fatal(err)
 	}
 }
 
