@@ -12,7 +12,7 @@ var (
 	MismatchedKeyErr = errors.New("mismatched job key")
 )
 
-type JobConfig struct {
+type Job struct {
 	Key         string   `gorethink:"key"`
 	Name        string   `gorethink:"name"`
 	Description string   `gorethink:"description"`
@@ -21,8 +21,8 @@ type JobConfig struct {
 }
 
 type Datastore interface {
-	PutJobConfig(*JobConfig) (string, error)
-	GetJobConfig(key string) (*JobConfig, error)
+	PutJob(*Job) (string, error)
+	GetJob(key string) (*Job, error)
 }
 
 type RethinkDatastore struct {
@@ -48,26 +48,26 @@ func calculateRethinkKey(name string) string {
 	return strings.Trim(re.ReplaceAllString(strings.ToLower(name), "-"), "-")
 }
 
-func (rd RethinkDatastore) PutJobConfig(config *JobConfig) (string, error) {
-	if config.Key == "" {
-		config.Key = calculateRethinkKey(config.Name)
-	} else if config.Key != calculateRethinkKey(config.Name) {
+func (rd RethinkDatastore) PutJob(job *Job) (string, error) {
+	if job.Key == "" {
+		job.Key = calculateRethinkKey(job.Name)
+	} else if job.Key != calculateRethinkKey(job.Name) {
 		return "", MismatchedKeyErr
 	}
-	r.Table("jobs").Insert(config).RunWrite(rd.rethinkSession)
+	r.Table("jobs").Insert(job).RunWrite(rd.rethinkSession)
 
-	return config.Key, nil
+	return job.Key, nil
 }
 
-func (rd RethinkDatastore) GetJobConfig(key string) (*JobConfig, error) {
+func (rd RethinkDatastore) GetJob(key string) (*Job, error) {
 	cursor, err := r.Table("jobs").Filter(map[string]interface{}{"key": key}).Run(rd.rethinkSession)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close()
 
-	var config JobConfig
-	cursor.One(&config)
+	var job Job
+	cursor.One(&job)
 
-	return &config, nil
+	return &job, nil
 }

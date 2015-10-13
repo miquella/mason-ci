@@ -2,9 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	//	"net/http"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"golang.org/x/net/websocket"
