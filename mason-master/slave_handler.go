@@ -6,10 +6,24 @@ import (
 	"log"
 
 	"github.com/miquella/mason-ci/messages"
+	"github.com/miquella/mason-ci/pool"
 	"golang.org/x/net/websocket"
 )
 
+var (
+	SlavePool = pool.New()
+
+	messageHandlers = make(map[string]func(ws *websocket.Conn, messageType string, data []byte))
+)
+
 func slaveWebsocketHandler(ws *websocket.Conn) {
+	var id string
+	defer func() {
+		if id != "" {
+			SlavePool.Unregister(id)
+		}
+	}()
+
 	var data []byte
 	for {
 		err := websocket.Message.Receive(ws, &data)
@@ -32,6 +46,27 @@ func slaveWebsocketHandler(ws *websocket.Conn) {
 			continue
 		}
 
-		log.Printf("Slave: Message received: %s", frame.MessageType)
+		// Handle "Register" specially
+		if frame.MessageType == "Register" {
+			var registerMsg messages.Register
+			err := json.Unmarshal(data, &registerMsg)
+			if err != nil {
+				log.Printf("Slave: failed to unmarshal register message: %s\n", err)
+				return
+			}
+
+			if registerMsg.Hostname == "" {
+				ws.Close()
+				log.Print("Slave: invalid hostname, closing socket")
+				return
+			}
+
+			id = registerMsg.Hostname
+			SlavePool.Register(id)
+		} else if callback, exists := messageHandlers[frame.MessageType]; exists {
+			callback(ws, frame.MessageType, data)
+		} else {
+			log.Printf("Slave: unhandled message: %s", frame.MessageType)
+		}
 	}
 }
