@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"github.com/miquella/mason-ci/datastore"
+	"github.com/miquella/mason-ci/datastore/drivers/rethink"
 	"log"
 	"net/http"
 
@@ -11,26 +13,26 @@ import (
 
 var (
 	Router = mux.NewRouter()
-	Store  Datastore
+	Store  *datastore.Datastore
 )
 
 func init() {
 	Router.Path("/slave").Headers("Upgrade", "websocket").Handler(websocket.Handler(slaveWebsocketHandler))
 
-	var rethinkAddress string
-	var rethinkDatabase string
-	flag.StringVar(&rethinkAddress, "rethink-address", "localhost:28015", "Rethink address")
-	flag.StringVar(&rethinkDatabase, "rethink-database", "mason_ci", "Rethink database name")
+	rethinkAddress := flag.String("rethink-address", "localhost:28015", "Rethink address")
+	rethinkDatabase := flag.String("rethink-database", "mason_ci", "Rethink database name")
 	flag.Parse()
 
-	var err error
-	Store, err = NewRethinkDatastore(rethinkAddress, rethinkDatabase)
+	log.Printf("Connecting to datastore %s (%s)", *rethinkAddress, *rethinkDatabase)
+	driver, err := rethink.NewRethinkDriver(*rethinkAddress, *rethinkDatabase)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to start rethinkdb driver: %s", err)
 	}
+	Store = datastore.NewDatastore(driver)
 }
 
 func main() {
+	log.Printf("Listening on :9535")
 	http.Handle("/", Router)
 	err := http.ListenAndServe(":9535", nil)
 	if err != nil {
