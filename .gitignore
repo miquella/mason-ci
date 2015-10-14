@@ -22,3 +22,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+mason-master/mason-master
+mason-slave/mason-slave
