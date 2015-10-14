@@ -25,3 +25,6 @@ _testmain.go
 
 mason-master/mason-master
 mason-slave/mason-slave
+
+web/node_modules
+web/assets

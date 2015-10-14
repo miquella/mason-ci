@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/miquella/mason-ci/datastore"
 	"github.com/miquella/mason-ci/datastore/drivers/rethink"
+	"github.com/miquella/mason-ci/web"
 	"log"
 	"net/http"
 
@@ -26,6 +27,10 @@ func init() {
 		log.Fatalf("Failed to start rethinkdb driver: %s", err)
 	}
 	Store = datastore.NewDatastore(driver)
+
+	// http root / assets
+	Router.HandleFunc("/", indexHandler)
+	Router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("../web/assets"))))
 }
 
 func main() {
@@ -35,4 +40,9 @@ func main() {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	t := web.LookupTemplate("index")
+	t.Execute(w, nil)
 }
