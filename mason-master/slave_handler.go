@@ -16,6 +16,10 @@ var (
 	messageHandlers = make(map[string]func(ws *websocket.Conn, messageType string, data []byte))
 )
 
+func init() {
+	Router.Path("/slave").Headers("Upgrade", "websocket").Handler(websocket.Handler(slaveWebsocketHandler))
+}
+
 func slaveWebsocketHandler(ws *websocket.Conn) {
 	var id string
 	defer func() {

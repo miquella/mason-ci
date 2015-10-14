@@ -17,8 +17,6 @@ var (
 )
 
 func init() {
-	Router.Path("/slave").Headers("Upgrade", "websocket").Handler(websocket.Handler(slaveWebsocketHandler))
-
 	rethinkAddress := flag.String("rethink-address", "localhost:28015", "Rethink address")
 	rethinkDatabase := flag.String("rethink-database", "mason_ci", "Rethink database name")
 	flag.Parse()
