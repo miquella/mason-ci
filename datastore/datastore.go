@@ -20,7 +20,7 @@ type Datastore struct {
 }
 
 type DatastoreDriver interface {
-	PutJob(*Job) error
+	PutJob(*Job) (id string, err error)
 	GetJob(key string) (*Job, error)
 }
 
@@ -41,7 +41,13 @@ func (d *Datastore) SaveJob(job *Job) error {
 		return ErrInvalidJobKey
 	}
 
-	return d.Driver.PutJob(job)
+	id, err := d.Driver.PutJob(job)
+	if err != nil {
+		return err
+	}
+
+	job.Id = id
+	return nil
 }
 
 func (d *Datastore) LoadJob(key string) (*Job, error) {

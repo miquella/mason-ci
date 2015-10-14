@@ -18,13 +18,25 @@ func NewRethinkDriver(address string, database string) (*rethinkDriver, error) {
 		return nil, err
 	}
 
-	r.TableCreate("jobs", r.TableCreateOpts{PrimaryKey: "key"}).RunWrite(session)
+	err = r.TableCreate("jobs").Exec(session)
+	if err != nil {
+		return nil, err
+	}
+
 	return &rethinkDriver{session: session}, nil
 }
 
-func (rd rethinkDriver) PutJob(job *datastore.Job) error {
-	r.Table("jobs").Insert(job).RunWrite(rd.session)
-	return nil
+func (rd rethinkDriver) PutJob(job *datastore.Job) (string, error) {
+	result, err := r.Table("jobs").Insert(job).RunWrite(rd.session)
+	if err != nil {
+		return err
+	}
+
+	if len(result.GeneratedKeys) > 0 {
+		return result.GeneratedKeys[0], nil
+	} else {
+		return job.Id, nil
+	}
 }
 
 func (rd *rethinkDriver) GetJob(key string) (*datastore.Job, error) {
