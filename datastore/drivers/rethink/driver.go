@@ -29,7 +29,7 @@ func NewRethinkDriver(address string, database string) (*rethinkDriver, error) {
 func (rd rethinkDriver) PutJob(job *datastore.Job) (string, error) {
 	result, err := r.Table("jobs").Insert(job).RunWrite(rd.session)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if len(result.GeneratedKeys) > 0 {
