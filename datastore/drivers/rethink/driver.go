@@ -18,12 +18,46 @@ func NewRethinkDriver(address string, database string) (*rethinkDriver, error) {
 		return nil, err
 	}
 
-	err = r.TableCreate("jobs").Exec(session)
+	err = createSchema(session)
 	if err != nil {
 		return nil, err
 	}
 
 	return &rethinkDriver{session: session}, nil
+}
+
+func getTableList(s *r.Session) (map[string]bool, error) {
+	cursor, err := r.TableList().Run(s)
+	if err != nil {
+		return nil, err
+	}
+
+	tableList := []string{}
+	err = cursor.All(&tableList)
+	if err != nil {
+		return nil, err
+	}
+
+	tables := map[string]bool{}
+	for _, table := range tableList {
+		tables[table] = true
+	}
+
+	return tables, nil
+}
+
+func createSchema(s *r.Session) error {
+	tables, err := getTableList(s)
+
+	if err == nil && !tables["jobs"] {
+		err = r.TableCreate("jobs").Exec(s)
+	}
+
+	if err == nil && !tables["builds"] {
+		err = r.TableCreate("builds").Exec(s)
+	}
+
+	return err
 }
 
 func (rd rethinkDriver) PutJob(job *datastore.Job) (string, error) {
