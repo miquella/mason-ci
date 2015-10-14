@@ -74,7 +74,7 @@ func (rd rethinkDriver) PutJob(job *datastore.Job) (string, error) {
 }
 
 func (rd *rethinkDriver) GetJob(key string) (*datastore.Job, error) {
-	cursor, err := r.Table("jobs").Get(key).Run(rd.session)
+	cursor, err := r.Table("jobs").Filter(r.Row.Field("key").Eq(key)).Run(rd.session)
 	if err != nil {
 		return nil, err
 	}
