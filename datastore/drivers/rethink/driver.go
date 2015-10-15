@@ -1,8 +1,10 @@
 package rethink
 
 import (
+	"encoding/json"
 	r "github.com/dancannon/gorethink"
 	"github.com/miquella/mason-ci/datastore"
+	"log"
 )
 
 type rethinkDriver struct {
@@ -96,4 +98,98 @@ func (rd *rethinkDriver) GetJob(key string) (*datastore.Job, error) {
 	}
 
 	return &job, nil
+}
+
+func (rd *rethinkDriver) NewBuild(jobKey string) (*datastore.Build, error) {
+	// atomically update the build number of the job
+	result, err := r.Table("jobs").Filter(
+		r.Row.Field("key").Eq(jobKey),
+	).Update(
+		map[string]interface{}{
+			"last_build_number": r.Row.Field("last_build_number").Add(1),
+		},
+		r.UpdateOpts{ReturnChanges: true},
+	).RunWrite(rd.session)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result.Changes) < 1 {
+		return nil, datastore.ErrJobNotFound
+	} else if len(result.Changes) > 1 {
+		log.Print("rethink: somehow updated more than one job getting a build number??")
+	}
+
+	// convert the udpated value into a job object
+	d, err := json.Marshal(result.Changes[0].NewValue)
+	if err != nil {
+		return nil, err
+	}
+
+	var job datastore.Job
+	err = json.Unmarshal(d, &job)
+	if err != nil {
+		return nil, err
+	}
+
+	// save the new build object
+	build := &datastore.Build{
+		JobId:  job.Id,
+		Number: job.LastBuildNumber,
+		Config: job.Config,
+	}
+	id, err := rd.PutBuild(build)
+	if err != nil {
+		return nil, err
+	}
+
+	build.Id = id
+	return build, nil
+}
+
+func (rd *rethinkDriver) PutBuild(build *datastore.Build) (string, error) {
+	result, err := r.Table("builds").Insert(
+		r.Table("builds").Filter(
+			r.And(
+				r.Row.Field("job_id").Eq(build.JobId),
+				r.Row.Field("number").Eq(build.Number),
+			),
+		).CoerceTo("array").Do(func(docs r.Term) interface{} {
+			return r.Branch(
+				r.Or(docs.IsEmpty(), docs.Field("id").Contains(build.Id)),
+				build,
+				r.Error("Build with job_id and number exists"),
+			)
+		}),
+		r.InsertOpts{Conflict: "replace"},
+	).RunWrite(rd.session)
+	if err != nil {
+		return "", err
+	}
+
+	if len(result.GeneratedKeys) > 0 {
+		return result.GeneratedKeys[0], nil
+	} else {
+		return build.Id, nil
+	}
+}
+
+func (rd *rethinkDriver) GetBuild(jobKey string, buildNumber int64) (*datastore.Build, error) {
+	cursor, err := r.Table("builds").Filter(
+		r.And(
+			r.Row.Field("job_id").Eq(jobKey),
+			r.Row.Field("number").Eq(buildNumber),
+		),
+	).Run(rd.session)
+	if err != nil {
+		return nil, err
+	}
+
+	var build datastore.Build
+	err = cursor.One(&build)
+	if err != nil {
+		return nil, err
+	}
+
+	return &build, nil
 }

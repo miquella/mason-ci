@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrInvalidJobKey    = errors.New("invalid job key")
+	ErrJobNotFound      = errors.New("job not found")
 	ErrMismatchedJobKey = errors.New("mismatched job key")
 )
 
@@ -22,6 +23,8 @@ type Datastore struct {
 type DatastoreDriver interface {
 	PutJob(*Job) (id string, err error)
 	GetJob(key string) (*Job, error)
+
+	NewBuild(jobKey string) (*Build, error)
 }
 
 func NewDatastore(driver DatastoreDriver) *Datastore {
@@ -52,6 +55,10 @@ func (d *Datastore) SaveJob(job *Job) error {
 
 func (d *Datastore) LoadJob(key string) (*Job, error) {
 	return d.Driver.GetJob(key)
+}
+
+func (d *Datastore) CreateBuild(jobKey string) (*Build, error) {
+	return d.Driver.NewBuild(jobKey)
 }
 
 func calculateJobKey(name string) string {
