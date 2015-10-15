@@ -61,7 +61,16 @@ func createSchema(s *r.Session) error {
 }
 
 func (rd rethinkDriver) PutJob(job *datastore.Job) (string, error) {
-	result, err := r.Table("jobs").Insert(job).RunWrite(rd.session)
+	result, err := r.Table("jobs").Insert(
+		r.Table("jobs").Filter(r.Row.Field("key").Eq(job.Key)).CoerceTo("array").Do(func(docs r.Term) interface{} {
+			return r.Branch(
+				r.Or(docs.IsEmpty(), docs.Field("id").Contains(job.Id)),
+				job,
+				r.Error("Job with key exists"),
+			)
+		}),
+		r.InsertOpts{Conflict: "replace"},
+	).RunWrite(rd.session)
 	if err != nil {
 		return "", err
 	}

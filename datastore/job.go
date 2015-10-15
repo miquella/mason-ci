@@ -1,7 +1,7 @@
 package datastore
 
 type Job struct {
-	Id          string `gorethink:"id"`
+	Id          string `gorethink:"id,omitempty"`
 	Key         string `gorethink:"key"`
 	Name        string `gorethink:"name"`
 	Description string `gorethink:"description"`
