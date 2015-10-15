@@ -15,6 +15,11 @@ func init() {
 	api.Path("/jobs/").Methods("GET").HandlerFunc(jobsIndexHandler)
 	api.Path("/jobs/").Methods("POST").HandlerFunc(jobCreateHandler)
 	api.Path("/jobs/{job}").Methods("GET").HandlerFunc(jobGetHandler)
+
+	api.Path("/jobs/{job}/builds").Methods("GET").Handler(http.RedirectHandler("builds/", http.StatusMovedPermanently))
+	// api.Path("/jobs/{job}/builds/").Methods("GET").HandlerFunc(buildIndexHandler)
+	api.Path("/jobs/{job}/builds/").Methods("POST").HandlerFunc(buildCreateHandler)
+	// api.Path("/jobs/{job}/builds/{build}").Methods("GET").HandlerFunc(buildGetHandler)
 }
 
 func apiJob(job *datastore.Job) map[string]interface{} {
@@ -26,6 +31,16 @@ func apiJob(job *datastore.Job) map[string]interface{} {
 		"config": map[string]interface{}{
 			"environment": job.Config.Environment,
 			"commands":    job.Config.Commands,
+		},
+	}
+}
+
+func apiBuild(build *datastore.Build) map[string]interface{} {
+	return map[string]interface{}{
+		"number": build.Number,
+		"config": map[string]interface{}{
+			"environment": build.Config.Environment,
+			"commands":    build.Config.Commands,
 		},
 	}
 }
@@ -104,5 +119,24 @@ func jobGetHandler(w http.ResponseWriter, r *http.Request) {
 	err = encoder.Encode(apiJob(job))
 	if err != nil {
 		log.Printf("Failed to encode job data: %s", err)
+	}
+}
+
+func buildCreateHandler(w http.ResponseWriter, r *http.Request) {
+	jobKey := mux.Vars(r)["job"]
+	build, err := Store.CreateBuild(jobKey)
+	if err == datastore.ErrJobNotFound {
+		http.NotFound(w, r)
+		return
+	} else if err != nil {
+		log.Printf("Failed to create build: %s", err)
+		http.Error(w, "failed to create build", http.StatusInternalServerError)
+		return
+	}
+
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(apiBuild(build))
+	if err != nil {
+		log.Printf("Failed to encode build data: %s", err)
 	}
 }
