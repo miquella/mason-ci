@@ -23,6 +23,7 @@ type Datastore struct {
 type DatastoreDriver interface {
 	PutJob(*Job) (id string, err error)
 	GetJob(key string) (*Job, error)
+	GetJobs() ([]*Job, error)
 
 	NewBuild(jobKey string) (*Build, error)
 }
@@ -55,6 +56,10 @@ func (d *Datastore) SaveJob(job *Job) error {
 
 func (d *Datastore) LoadJob(key string) (*Job, error) {
 	return d.Driver.GetJob(key)
+}
+
+func (d *Datastore) LoadJobs() ([]*Job, error) {
+	return d.Driver.GetJobs()
 }
 
 func (d *Datastore) CreateBuild(jobKey string) (*Build, error) {

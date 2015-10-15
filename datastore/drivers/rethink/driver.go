@@ -100,6 +100,21 @@ func (rd *rethinkDriver) GetJob(key string) (*datastore.Job, error) {
 	return &job, nil
 }
 
+func (rd *rethinkDriver) GetJobs() ([]*datastore.Job, error) {
+	cursor, err := r.Table("jobs").Run(rd.session)
+	if err != nil {
+		return nil, err
+	}
+
+	jobs := []*datastore.Job{}
+	err = cursor.All(&jobs)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
+}
+
 func (rd *rethinkDriver) NewBuild(jobKey string) (*datastore.Build, error) {
 	// atomically update the build number of the job
 	result, err := r.Table("jobs").Filter(
