@@ -23,6 +23,8 @@ _testmain.go
 *.test
 *.prof
 
+.DS_STORE
+
 mason-master/mason-master
 mason-slave/mason-slave
 
