@@ -20,7 +20,7 @@ Object.defineProperty(Store.prototype, 'jobs', {
         }
 
         store._jobs = JSON.parse(this.response);
-        store.emit('change');
+        store.emit('change_jobs');
       });
       xhr.send();
     }
@@ -28,6 +28,32 @@ Object.defineProperty(Store.prototype, 'jobs', {
     return this._jobs;
   },
 });
+
+Object.defineProperty(Store.prototype, 'builds', {
+  get: function() {
+    if(this._builds === undefined){
+      return [];
+    }
+    return this._builds;
+  },
+});
+
+Store.prototype.getBuilds = function(jobKey) {
+  var store = this;
+  this._builds = [];
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/jobs/' + jobKey + '/builds/');
+  xhr.addEventListener('load', function() {
+    if (this.status !== 200) {
+      console.error('build index query failed');
+      return;
+    }
+
+    store._builds = JSON.parse(this.response);
+    store.emit('change_builds');
+  });
+  xhr.send();
+};
 
 Store.prototype.createBuild = function(jobKey) {
   var xhr = new XMLHttpRequest();

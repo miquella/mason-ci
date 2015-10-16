@@ -1,7 +1,7 @@
 import React from 'react'
 
-import JobStore from '../stores/jobstore'
-import JobList from './jobs/joblist'
+import JobStore from '../stores/JobStore'
+import JobList from './jobs/JobList'
 
 export default class Jobs extends React.Component {
   constructor(props) {
@@ -11,11 +11,11 @@ export default class Jobs extends React.Component {
   }
 
   componentDidMount() {
-    JobStore.addListener('change', this.updateFromStore);
+    JobStore.addListener('change_jobs', this.updateFromStore);
   }
 
   componentWillUmount() {
-    JobStore.removeListener('change', this.updateFromStore);
+    JobStore.removeListener('change_jobs', this.updateFromStore);
   }
 
   updateFromStore() {

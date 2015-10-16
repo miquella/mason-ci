@@ -1,9 +1,11 @@
 import React from 'react'
-import JobStore from '../../stores/jobstore'
+import { Link } from 'react-router'
+
+import JobStore from '../../stores/JobStore'
 
 export default (props) => (
   <tr>
-    <td>{props.job.name}</td>
+    <td><Link to={'/jobs/' + props.job.key + '/builds'}>{props.job.name}</Link></td>
     <td>{props.job.description}</td>
     <td><button className="btn btn-primary btn-xs" onClick={JobStore.createBuild.bind(JobStore, props.job.key)}>Run Build</button></td>
   </tr>

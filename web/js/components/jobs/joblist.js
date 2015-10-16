@@ -1,5 +1,5 @@
 import React from 'react'
-import Job from './job'
+import JobListItem from './JobListItem'
 
 export default (props) => (
   <table className="table table-striped">
@@ -11,7 +11,7 @@ export default (props) => (
       </tr>
     </thead>
     <tbody>
-      {props.jobs.map((job) => {return(<Job key={job.key} job={job} />)})}
+      {props.jobs.map((job) => {return(<JobListItem key={job.key} job={job} />)})}
     </tbody>
   </table>
 )
