@@ -10,7 +10,7 @@ let routes = (
   <Route path="/" component={App}>
     <IndexRoute component={Home} />
     <Route path="jobs" component={Jobs} />
-	<Route path="jobs/:job/builds" component={Builds} />
+    <Route path="jobs/:job/builds" component={Builds} />
   </Route>
 )
 export default routes
