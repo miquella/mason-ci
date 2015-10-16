@@ -189,6 +189,23 @@ func (rd *rethinkDriver) PutBuild(build *datastore.Build) (string, error) {
 	}
 }
 
+func (rd *rethinkDriver) GetBuilds(jobKey string) ([]*datastore.Build, error) {
+	cursor, err := r.Table("builds").Filter(
+		r.Row.Field("job_id").Eq(jobKey),
+	).Run(rd.session)
+	if err != nil {
+		return nil, err
+	}
+
+	builds := []*datastore.Build{}
+	err = cursor.All(&builds)
+	if err != nil {
+		return nil, err
+	}
+
+	return builds, nil
+}
+
 func (rd *rethinkDriver) GetBuild(jobKey string, buildNumber int64) (*datastore.Build, error) {
 	cursor, err := r.Table("builds").Filter(
 		r.And(

@@ -17,7 +17,7 @@ func init() {
 	api.Path("/jobs/{job}").Methods("GET").HandlerFunc(jobGetHandler)
 
 	api.Path("/jobs/{job}/builds").Methods("GET").Handler(http.RedirectHandler("builds/", http.StatusMovedPermanently))
-	// api.Path("/jobs/{job}/builds/").Methods("GET").HandlerFunc(buildIndexHandler)
+	api.Path("/jobs/{job}/builds/").Methods("GET").HandlerFunc(buildsIndexHandler)
 	api.Path("/jobs/{job}/builds/").Methods("POST").HandlerFunc(buildCreateHandler)
 	// api.Path("/jobs/{job}/builds/{build}").Methods("GET").HandlerFunc(buildGetHandler)
 }
@@ -138,5 +138,26 @@ func buildCreateHandler(w http.ResponseWriter, r *http.Request) {
 	err = encoder.Encode(apiBuild(build))
 	if err != nil {
 		log.Printf("Failed to encode build data: %s", err)
+	}
+}
+
+func buildsIndexHandler(w http.ResponseWriter, r *http.Request) {
+	jobKey := mux.Vars(r)["job"]
+	builds, err := Store.LoadBuilds(jobKey)
+	if err != nil {
+		log.Printf("Failed to query builds: %s", err)
+		http.Error(w, "failed while querying builds", http.StatusInternalServerError)
+		return
+	}
+
+	apiBuilds := make([]map[string]interface{}, len(builds))
+	for i, build := range builds {
+		apiBuilds[i] = apiBuild(build)
+	}
+
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(&apiBuilds)
+	if err != nil {
+		log.Printf("Failed to encode builds data: %s", err)
 	}
 }

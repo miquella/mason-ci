@@ -25,6 +25,7 @@ type DatastoreDriver interface {
 	GetJob(key string) (*Job, error)
 	GetJobs() ([]*Job, error)
 
+	GetBuilds(jobKey string) ([]*Build, error)
 	NewBuild(jobKey string) (*Build, error)
 }
 
@@ -64,6 +65,10 @@ func (d *Datastore) LoadJobs() ([]*Job, error) {
 
 func (d *Datastore) CreateBuild(jobKey string) (*Build, error) {
 	return d.Driver.NewBuild(jobKey)
+}
+
+func (d *Datastore) LoadBuilds(jobKey string) ([]*Build, error) {
+	return d.Driver.GetBuilds(jobKey)
 }
 
 func calculateJobKey(name string) string {
